@@ -33,53 +33,79 @@
           @totalPR = 0
           @accessToken = localStorage.getItem('accessToken')
           @apihost = if localStorage.getItem('githubApiHost') then localStorage.getItem('githubApiHost') else 'https://api.github.com'
-          @repositories = JSON.parse(localStorage.getItem('repositories'))
+          @fetchRepositories -> 
+            dfds = []
 
-          dfds = []
-
-          dfds.push $.ajax
-            type: 'get'
-            url: @apihost + "/user?access_token=#{@accessToken}"
-            success: (data) =>
-              localStorage.setItem('user', JSON.stringify(data))
-            error: =>
-              debugger
-
-          _(@repositories).each (repo) =>
             dfds.push $.ajax
               type: 'get'
-              url: @apihost + "/repos/#{repo}/pulls?access_token=#{@accessToken}"
+              url: @apihost + "/user?access_token=#{@accessToken}"
               success: (data) =>
-                @store(repo, data)
+                localStorage.setItem('user', JSON.stringify(data))
               error: =>
                 debugger
 
-          $.when.apply($, dfds).done =>
-            user = JSON.parse(localStorage.getItem('user')) or {}            
-            repos = JSON.parse(localStorage.getItem('repos')) or {}
-            hiddenPRs = JSON.parse(localStorage.getItem('hiddenPRs')) or []
+            _(@repositories).each (repo) =>
+              dfds.push $.ajax
+                type: 'get'
+                url: @apihost + "/repos/#{repo}/pulls?access_token=#{@accessToken}"
+                success: (data) =>
+                  @store(repo, data)
+                error: =>
+                  debugger
 
-            totalPR = _(repos).reduce (prev, prs) ->
-              filtered = _(prs).filter (pr) -> pr.assignee and pr.assignee.id == user.id and not _(hiddenPRs).contains pr.id
-              prev + filtered.length
-            , 0
+            $.when.apply($, dfds).done =>
+              user = JSON.parse(localStorage.getItem('user')) or {}            
+              repos = JSON.parse(localStorage.getItem('repos')) or {}
+              hiddenPRs = JSON.parse(localStorage.getItem('hiddenPRs')) or []
+              assignedToMe = localStorage.getItem('assignedToMe') is "true"
 
-            if totalPR > 0
-              chrome.browserAction.setBadgeText text: "#{totalPR}"
-            else
-              chrome.browserAction.setBadgeText text: ''
-            if port
-              port.postMessage success: true
+              totalPR = _(repos).reduce (prev, prs) ->
+                filtered = _(prs).filter (pr) -> (pr.assignee and pr.assignee.id == user.id or not assignedToMe) and not _(hiddenPRs).contains pr.id
+                prev + filtered.length
+              , 0
+
+              if totalPR > 0
+                chrome.browserAction.setBadgeText text: "#{totalPR}"
+              else
+                chrome.browserAction.setBadgeText text: ''
+              if port
+                port.postMessage success: true          
 
         store: (repo, data) ->
           repos = JSON.parse(localStorage.getItem('repos')) or {}
           repos[repo] = data
           localStorage.setItem('repos', JSON.stringify(repos))
 
+        fetchRepositories: (callback) ->
+          if localStorage.getItem('fetchAllRepos') is "true"
+            @repositories = []
+            $.ajax
+              type: 'get'
+              url: @apihost + "/user/orgs?access_token=#{@accessToken}"
+              success: (orgs) =>
+                requests = []
+                _(orgs).each (org) =>
+                  requests.push $.ajax
+                    type: 'get'
+                    url: "#{org.repos_url}?access_token=#{@accessToken}"
+                    success: (repos) =>
+                      _(repos).each (repo) =>
+                        @repositories.push repo.full_name
+                    error: =>
+                      debugger
+
+                $.when.apply($, requests).done =>
+                  callback.call(@)
+              error: =>
+                debugger
+          else
+            @repositories = JSON.parse(localStorage.getItem('repositories'))
+            callback.call(@)
+
       fetcher = new Fetcher
       fetcher.fetch()
 
-      interval = localStorage.getItem('refreshRate') or 600000
+      interval = +(localStorage.getItem('refreshRate') or 10) * 60000
       setInterval ->
         fetcher.fetch()
       , interval

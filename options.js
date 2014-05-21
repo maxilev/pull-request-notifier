@@ -12,6 +12,12 @@ function save_options() {
   var refreshRate = document.querySelector("#refresh-rate");
   localStorage.setItem('refreshRate', refreshRate.value);
 
+  var assignedToMe = document.querySelector("#assigned-to-me");
+  localStorage.setItem('assignedToMe', assignedToMe.checked);
+
+  var fetchAllRepos = document.querySelector("#fetch-all-repos");
+  localStorage.setItem('fetchAllRepos', fetchAllRepos.checked);
+
   // Update status to let user know options were saved.
   var status = document.querySelector(".status");
   status.innerHTML = "saved";
@@ -37,6 +43,14 @@ function restore_options() {
   var refreshRate = localStorage.getItem('refreshRate');
   var refreshRateField = document.querySelector("#refresh-rate");
   refreshRateField.value = refreshRate;
+
+  var assignedToMe = localStorage.getItem('assignedToMe');
+  var assignedToMeField = document.querySelector("#assigned-to-me");
+  assignedToMeField.checked = (assignedToMe === "true");
+
+  var fetchAllRepos = localStorage.getItem('fetchAllRepos');
+  var fetchAllReposField = document.querySelector("#fetch-all-repos");
+  fetchAllReposField.checked = (fetchAllRepos === "true");
 }
 document.addEventListener('DOMContentLoaded', restore_options);
 document.querySelector('.save').addEventListener('click', save_options);

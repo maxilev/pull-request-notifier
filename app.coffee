@@ -25,6 +25,7 @@ class GithubMon
     @renderVersion()
     @accessToken = localStorage.getItem('accessToken')
     @githubHost  = if localStorage.getItem('githubHost') then localStorage.getItem('githubHost') else 'https://github.com'
+    @assignedToMe = localStorage.getItem('assignedToMe') is "true"
 
     if @accessToken
       @render()
@@ -60,7 +61,7 @@ class GithubMon
       $('.empty').hide()
       html = _(@repositoryJSON).map (pullRequests, repo) =>        
         pullRequests = _(pullRequests).filter (pr) =>
-          pr.assignee and pr.assignee.id == @user.id and not _(@hiddenPRs).contains pr.id
+          (pr.assignee and pr.assignee.id == @user.id or not @assignedToMe) and not _(@hiddenPRs).contains pr.id
 
         if pullRequests.length > 0
           pullRequestsHTML = _(pullRequests).map (pr) =>
@@ -73,13 +74,12 @@ class GithubMon
               user_url: pr.user.html_url
               git_host: @githubHost
               created_at: moment.utc(pr.created_at).fromNow()
-        else
-          pullRequestsHTML = ["<li><p>No PR's</p></li>"]
-
-        _.template @repositoryTemplate,
-          name: repo
-          git_host: @githubHost
-          pullRequests: pullRequestsHTML.join('')
+        
+          _.template @repositoryTemplate,
+            name: repo
+            git_host: @githubHost
+            pullRequests: pullRequestsHTML.join('')
+            
       $('#repositories').html html.join('')
     else
       $('#repositories').html('')

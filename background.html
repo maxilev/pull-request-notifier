@@ -36,6 +36,15 @@
           @repositories = JSON.parse(localStorage.getItem('repositories'))
 
           dfds = []
+
+          dfds.push $.ajax
+            type: 'get'
+            url: @apihost + "/user?access_token=#{@accessToken}"
+            success: (data) =>
+              localStorage.setItem('user', JSON.stringify(data))
+            error: =>
+              debugger
+
           _(@repositories).each (repo) =>
             dfds.push $.ajax
               type: 'get'
@@ -46,11 +55,12 @@
                 debugger
 
           $.when.apply($, dfds).done =>
+            user = JSON.parse(localStorage.getItem('user')) or {}            
             repos = JSON.parse(localStorage.getItem('repos')) or {}
             hiddenPRs = JSON.parse(localStorage.getItem('hiddenPRs')) or []
 
             totalPR = _(repos).reduce (prev, prs) ->
-              filtered = _(prs).filter (pr) -> not _(hiddenPRs).contains pr.id
+              filtered = _(prs).filter (pr) -> pr.assignee and pr.assignee.id == user.id and not _(hiddenPRs).contains pr.id
               prev + filtered.length
             , 0
 

@@ -39,11 +39,15 @@ class GithubMon
     $('.version').text(manifest.version)
 
   render: ->
+    @fetchUser()
     @fetchRepositories()
     @fetchPullRequests()
     @populateRepoList()
     @bindEvents()
 
+  fetchUser: =>
+    @user = JSON.parse(localStorage.getItem('user')) or {}
+    
   fetchRepositories: =>
     @repositories = JSON.parse(localStorage.getItem('repositories')) or []
 
@@ -54,9 +58,10 @@ class GithubMon
   populateRepoList: ->
     if @repositories.length > 0
       $('.empty').hide()
-      html = _(@repositoryJSON).map (pullRequests, repo) =>
+      html = _(@repositoryJSON).map (pullRequests, repo) =>        
         pullRequests = _(pullRequests).filter (pr) =>
-          not _(@hiddenPRs).contains pr.id
+          pr.assignee and pr.assignee.id == @user.id and not _(@hiddenPRs).contains pr.id
+
         if pullRequests.length > 0
           pullRequestsHTML = _(pullRequests).map (pr) =>
             _.template @pullRequestTemplate,

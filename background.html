@@ -87,7 +87,7 @@
                 _(orgs).each (org) =>
                   requests.push $.ajax
                     type: 'get'
-                    url: "#{org.repos_url}?access_token=#{@accessToken}"
+                    url: "#{org.repos_url}?access_token=#{@accessToken}&per_page=100"
                     success: (repos) =>
                       _(repos).each (repo) =>
                         @repositories.push repo.full_name

@@ -17,6 +17,7 @@ function save_options() {
 
   var fetchAllRepos = document.querySelector("#fetch-all-repos");
   localStorage.setItem('fetchAllRepos', fetchAllRepos.checked);
+  localStorage.removeItem('repos');
 
   // Update status to let user know options were saved.
   var status = document.querySelector(".status");

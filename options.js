@@ -55,3 +55,10 @@ function restore_options() {
 }
 document.addEventListener('DOMContentLoaded', restore_options);
 document.querySelector('.save').addEventListener('click', save_options);
+
+var app = angular.module('App', []);
+app.controller('MainCtrl', function($scope) {
+
+  $scope.repositories = JSON.parse(window.localStorage.repositories);
+  $scope.githubHost = window.localStorage.githubHost != "" ? window.localStorage.githubHost : 'https://github.com';
+});

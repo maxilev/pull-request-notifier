@@ -10,12 +10,17 @@
     small {
       opacity: 0.7;
     }
+    .strike {
+      text-decoration: line-through;
+    }
   </style>
   <script src="angular.min.js"></script>
+  <script src="underscore-min.js"></script>
+  <script src="jquery-2.0.3.min.js"></script>
 </head>
 
 <body>
-  <section>
+  <section ng-app="App" ng-controller="MainCtrl">
     <h1>Pull Request Monitor</h1>
     <small>Yeah baby!</small>
     <p>
@@ -42,17 +47,18 @@
       <label for="fetch-all-repos">Fetch all repositories</label>
       <input type="checkbox" name="fetch-all-repos" id="fetch-all-repos"/>
     </p>
-    <div ng-app="App" ng-controller="MainCtrl">
-      <table>
-        <tr>
-          <th>Repositories</th>
-        </tr>
-        <tr ng-repeat="r in repositories">
-          <td><a href="{{githubHost}}/{{r}}" target="_blank">{{r}}</a></td>
-        </tr>
-      </table>
 
-    </div>
+    <table>
+      <tr>
+        <th>Repositories</th>
+        <th>Remove</th>
+      </tr>
+      <tr ng-repeat="r in repositories">
+        <td><a ng-class="{strike: toBeDeleted[r]}" href="{{githubHost}}/{{r}}" target="_blank">{{r}}</a></td>
+        <td><input type="checkbox" ng-model="toBeDeleted[r]"/></td>
+      </tr>
+    </table>
+
     <button class="save">Save</button>
     <p class="status"></p>
   </section>

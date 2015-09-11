@@ -1,5 +1,5 @@
 // Saves options to localStorage.
-function save_options() {
+function save_options($scope) {
   var githubHostField = document.querySelector("#github-host");
   localStorage.setItem('githubHost', githubHostField.value);
 
@@ -18,6 +18,13 @@ function save_options() {
   var fetchAllRepos = document.querySelector("#fetch-all-repos");
   localStorage.setItem('fetchAllRepos', fetchAllRepos.checked);
   localStorage.removeItem('repos');
+
+  var repositories = JSON.parse(localStorage.getItem('repositories'));
+  var reposToDeleteList = _.filter(Object.keys($scope.toBeDeleted), function(key) {return $scope.toBeDeleted[key]});
+  repositories = _.difference(repositories, reposToDeleteList);
+  localStorage.setItem('repositories', JSON.stringify(repositories));
+  $scope.repositories = repositories;
+  $scope.toBeDeleted = {};
 
   // Update status to let user know options were saved.
   var status = document.querySelector(".status");
@@ -54,4 +61,17 @@ function restore_options() {
   fetchAllReposField.checked = (fetchAllRepos === "true");
 }
 document.addEventListener('DOMContentLoaded', restore_options);
-document.querySelector('.save').addEventListener('click', save_options);
+
+var app = angular.module('App', []);
+app.controller('MainCtrl', function($scope) {
+
+  $scope.repositories = JSON.parse(window.localStorage.repositories);
+  $scope.githubHost = window.localStorage.githubHost != "" ? window.localStorage.githubHost : 'https://github.com';
+  $scope.toBeDeleted = {};
+
+  $('.save').click(function() {
+    save_options($scope);
+    $scope.$apply();
+  })
+
+});
